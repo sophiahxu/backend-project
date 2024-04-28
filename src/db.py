@@ -3,12 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 association_table_instructor = db.Table('cuisine_instructor_association', db.Model.metadata,
-    db.Column('cuisine_id', db.Integer, db.ForeignKey('cuisine.id')),
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id'))
-)
-
-association_table_student = db.Table('cuisine_student_association', db.Model.metadata,
-    db.Column('cuisine_id', db.Integer, db.ForeignKey('cuisine.id')),
+    db.Column('recipe_id', db.Integer, db.ForeignKey('recipe.id')),
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'))
 )
 
@@ -19,8 +14,6 @@ class Cuisine(db.Model):
   description = db.Column(db.String, nullable=False)
   name = db.Column(db.String, nullable=False)
   recipes = db.relationship("Recipe", cascade="delete")
-  instructors = db.relationship("User", secondary='cuisine_instructor_association', back_populates="cuisines_taught")
-  students = db.relationship("User", secondary='cuisine_student_association', back_populates="cuisines_enrolled")
 
   def __init__(self, **kwargs):
     self.description = kwargs.get("description", "")
@@ -31,12 +24,10 @@ class Cuisine(db.Model):
         "id": self.id,
         "description": self.description,
         "name": self.name,
-        "recipes": [recipe.simple_serialize() for recipe in self.recipes],
-        "instructors": [instructor.simple_serialize() for instructor in self.instructors],
-        "students": [student.simple_serialize() for student in self.students] 
+        "recipes": [recipe.simple_serialize() for recipe in self.recipes]
     }
   
-  # Serialize a cuisine without recipes, students, or instructors fields
+  # Serialize a cuisine without recipes, or instructors fields
   def serialize_cuisine(self):
       return {
           "id": self.id,
@@ -49,12 +40,13 @@ class Recipe(db.Model):
 
   id = db.Column(db.Integer, primary_key=True, autoincrement=True)
   title = db.Column(db.String, nullable=False)
-  due_date = db.Column(db.Integer, nullable=False)
+  date_made = db.Column(db.Integer, nullable=False)
   cuisine_id = db.Column(db.Integer, db.ForeignKey("cuisine.id"))
+  instructors = db.relationship("User", secondary='cuisine_instructor_association', back_populates="cuisines_taught")
 
   def __init__(self, **kwargs):
         self.title= kwargs.get("title")
-        self.due_date=kwargs.get("due_date")
+        self.date_made=kwargs.get("date_made")
         self.cuisine_id= kwargs.get("cuisine_id")
 
   def serialize(self):
@@ -62,15 +54,16 @@ class Recipe(db.Model):
     return {
     'id': self.id,
     'title': self.title,
-    'due_date': self.due_date,
-    'cuisine': cuisine.serialize_cuisine()
+    'date_made': self.date_made,
+    'cuisine': cuisine.serialize_cuisine(),
+    "instructors": [instructor.simple_serialize() for instructor in self.instructors]
     }
   
   def simple_serialize(self):
      return {
         'id': self.id,
         'title': self.title,
-        'due_date': self.due_date
+        'date_made': self.date_made
      }
 
 class User(db.Model):
@@ -79,29 +72,26 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String, nullable=False)
     netid = db.Column(db.String, nullable=False)
-    cuisines_taught = db.relationship("Cuisine", secondary=association_table_instructor, back_populates="instructors")
-    cuisines_enrolled = db.relationship("Cuisine", secondary=association_table_student, back_populates="students")
+    cuisines_taught = db.relationship("Recipe", secondary=association_table_instructor, back_populates="instructors")
 
     def __init__(self,**kwargs):
         self.name= kwargs.get("name")
         self.netid= kwargs.get("netid")
 
     def serialize(self):
-        enrolled_cuisine_ids = [cuisine.id for cuisine in self.cuisines_enrolled]
-        taught_cuisine_ids = [cuisine.id for cuisine in self.cuisines_taught]
-        all_cuisine_ids = enrolled_cuisine_ids + taught_cuisine_ids
+        taught_recipe_ids = [recipe.id for recipe in self.cuisines_taught]
         
-        cuisines = []
-        for cuisine_id in all_cuisine_ids:
-            cuisine = cuisine.query.filter_by(id=cuisine_id).first()
-            if cuisine:
-                cuisines.append(cuisine.serialize_cuisine())
+        recipes = []
+        for recipe_id in taught_recipe_ids:
+            recipe = Recipe.query.filter_by(id=recipe_id).first()
+            if recipe:
+                recipes.append(recipe.simple_serialize())
         
         return {
             "id": self.id,
             "name": self.name,
             "netid": self.netid,
-            "cuisines": cuisines
+            "cuisines": recipes
         }
     
     def simple_serialize(self):

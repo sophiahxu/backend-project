@@ -42,7 +42,7 @@ def create_cuisine():
 #get a specific cuisine
 @app.route("/api/cuisines/<int:cuisine_id>/", methods=["GET"])
 def get_cuisine(cuisine_id):
-    cuisine = cuisine.query.filter_by(id=cuisine_id).first()
+    cuisine = Cuisine.query.filter_by(id=cuisine_id).first()
     if cuisine is None:
         return failure_response("cuisine not found!")
     
@@ -51,7 +51,7 @@ def get_cuisine(cuisine_id):
 #delete a cuisine
 @app.route("/api/cuisines/<int:cuisine_id>/", methods=["DELETE"])
 def delete_cuisine(cuisine_id):
-    cuisine = cuisine.query.filter_by(id=cuisine_id).first()
+    cuisine = Cuisine.query.filter_by(id=cuisine_id).first()
     if cuisine is None:
         return failure_response("Task not found!")
     
@@ -88,7 +88,7 @@ def add_user_to_cuisine(cuisine_id):
     if not body or 'user_id' not in body or 'type' not in body:
         return failure_response("Missing required fields: user_id or type", 400)
 
-    cuisine = cuisine.query.filter_by(id=cuisine_id).first()
+    cuisine = Cuisine.query.filter_by(id=cuisine_id).first()
     if not cuisine:
         return failure_response("cuisine not found", 404)
 
@@ -111,16 +111,16 @@ def add_user_to_cuisine(cuisine_id):
 @app.route("/api/cuisines/<int:cuisine_id>/recipe/", methods=["POST"])
 def create_recipe_for_cuisine(cuisine_id):
     body = json.loads(request.data)
-    if not body or 'title' not in body or 'due_date' not in body:
-        return failure_response("Missing required fields: title and due_date", 400)
+    if not body or 'title' not in body or 'date_made' not in body:
+        return failure_response("Missing required fields: title and date_made", 400)
 
-    cuisine = cuisine.query.filter_by(id=cuisine_id).first()
+    cuisine = Cuisine.query.filter_by(id=cuisine_id).first()
     if not cuisine or cuisine is None:
         return failure_response("cuisine not found", 404)
 
-    due_date = body['due_date']
+    date_made = body['date_made']
 
-    new_recipe = Recipe(title=body['title'], due_date=due_date, cuisine_id=cuisine_id)
+    new_recipe = Recipe(title=body['title'], date_made=date_made, cuisine_id=cuisine_id)
     db.session.add(new_recipe)
     db.session.commit()
 
