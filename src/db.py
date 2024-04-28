@@ -2,7 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-association_table_instructor = db.Table('cuisine_instructor_association', db.Model.metadata,
+association_table_users = db.Table('recipe_users_association', db.Model.metadata,
     db.Column('recipe_id', db.Integer, db.ForeignKey('recipe.id')),
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'))
 )
@@ -27,7 +27,7 @@ class Cuisine(db.Model):
         "recipes": [recipe.simple_serialize() for recipe in self.recipes]
     }
   
-  # Serialize a cuisine without recipes, or instructors fields
+  # Serialize a cuisine without recipes, or shared_users fields
   def serialize_cuisine(self):
       return {
           "id": self.id,
@@ -42,7 +42,7 @@ class Recipe(db.Model):
   title = db.Column(db.String, nullable=False)
   date_made = db.Column(db.Integer, nullable=False)
   cuisine_id = db.Column(db.Integer, db.ForeignKey("cuisine.id"))
-  instructors = db.relationship("User", secondary='cuisine_instructor_association', back_populates="cuisines_taught")
+  shared_users = db.relationship("User", secondary='recipe_users_association', back_populates="cuisines_taught")
 
   def __init__(self, **kwargs):
         self.title= kwargs.get("title")
@@ -50,13 +50,13 @@ class Recipe(db.Model):
         self.cuisine_id= kwargs.get("cuisine_id")
 
   def serialize(self):
-    cuisine = cuisine.query.filter_by(id=self.cuisine_id).first()
+    cuisine = Cuisine.query.filter_by(id=self.cuisine_id).first()
     return {
     'id': self.id,
     'title': self.title,
     'date_made': self.date_made,
     'cuisine': cuisine.serialize_cuisine(),
-    "instructors": [instructor.simple_serialize() for instructor in self.instructors]
+    "shared_users": [instructor.simple_serialize() for instructor in self.shared_users]
     }
   
   def simple_serialize(self):
@@ -72,7 +72,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String, nullable=False)
     netid = db.Column(db.String, nullable=False)
-    cuisines_taught = db.relationship("Recipe", secondary=association_table_instructor, back_populates="instructors")
+    cuisines_taught = db.relationship("Recipe", secondary=association_table_users, back_populates="shared_users")
 
     def __init__(self,**kwargs):
         self.name= kwargs.get("name")

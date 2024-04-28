@@ -107,7 +107,7 @@ def add_user_to_cuisine(cuisine_id):
     db.session.commit()
     return json.dumps(cuisine.serialize()), 200
 
-# Create an recipe for a cuisine
+# Create a recipe for a cuisine
 @app.route("/api/cuisines/<int:cuisine_id>/recipe/", methods=["POST"])
 def create_recipe_for_cuisine(cuisine_id):
     body = json.loads(request.data)
