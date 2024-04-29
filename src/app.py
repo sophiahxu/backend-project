@@ -81,32 +81,6 @@ def get_user(user_id):
 
     return json.dumps(user.serialize()), 200
 
-# Add a user to a cuisine
-@app.route("/api/cuisines/<int:cuisine_id>/add/", methods=["POST"])
-def add_user_to_cuisine(cuisine_id):
-    body = json.loads(request.data)
-    if not body or 'user_id' not in body or 'type' not in body:
-        return failure_response("Missing required fields: user_id or type", 400)
-
-    cuisine = Cuisine.query.filter_by(id=cuisine_id).first()
-    if not cuisine:
-        return failure_response("cuisine not found", 404)
-
-    user = User.query.get(body['user_id'])
-    if not user:
-        return failure_response("User not found", 404)
-
-    # Add the user to the cuisine whether student or instructor
-    if body['type'] == 'student':
-        cuisine.students.append(user)
-    elif body['type'] == 'instructor':
-        cuisine.instructors.append(user)
-    else:
-        return failure_response("Invalid user type", 400)
-
-    db.session.commit()
-    return json.dumps(cuisine.serialize()), 200
-
 # Create a recipe for a cuisine
 @app.route("/api/cuisines/<int:cuisine_id>/recipe/", methods=["POST"])
 def create_recipe_for_cuisine(cuisine_id):
