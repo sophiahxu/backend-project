@@ -31,6 +31,9 @@ def get_cuisines():
 #create a cuisine
 @app.route("/api/cuisines/", methods=["POST"])
 def create_cuisine():
+    """
+    Endpoint for creating a cuisine
+    """
     body = json.loads(request.data)
     if not body or "name" not in body:
         return failure_response("Cuisine name missing!", 400)
@@ -43,6 +46,9 @@ def create_cuisine():
 #get a specific cuisine
 @app.route("/api/cuisines/<int:cuisine_id>/", methods=["GET"])
 def get_cuisine(cuisine_id):
+    """
+    Endpoint for getting a cuisine by its cuisine id
+    """
     cuisine = Cuisine.query.filter_by(id=cuisine_id).first()
 
     if cuisine is None:
@@ -53,6 +59,9 @@ def get_cuisine(cuisine_id):
 #delete a cuisine
 @app.route("/api/cuisines/<int:cuisine_id>/", methods=["DELETE"])
 def delete_cuisine(cuisine_id):
+    """
+    Endpoint for deleting a cuisine
+    """
     cuisine = Cuisine.query.filter_by(id=cuisine_id).first()
     if cuisine is None:
         return failure_response("cuisine not found!")
@@ -64,6 +73,9 @@ def delete_cuisine(cuisine_id):
 # Create a new user
 @app.route('/api/users/', methods=['POST'])
 def create_user():
+    """
+    Endpoint for creating a cuisine
+    """
     body = json.loads(request.data)
     if not body or 'name' not in body:
         return failure_response("Missing required fields: name", 400)
@@ -77,6 +89,9 @@ def create_user():
 # Get a specific user
 @app.route('/api/users/<int:user_id>/', methods=['GET'])
 def get_user(user_id):
+    """
+    Endpoint for getting a user by the user id
+    """
     user = User.query.filter_by(id=user_id).first()
     if not user:
         return failure_response("User not found")
@@ -86,6 +101,9 @@ def get_user(user_id):
 # Create a recipe for a cuisine
 @app.route("/api/cuisines/<int:cuisine_id>/recipe/", methods=["POST"])
 def create_recipe_for_cuisine(cuisine_id):
+    """
+    Endpoint for creating a recipe for cuisine given the cuisine id
+    """
     body = json.loads(request.data)
     date_made = body['date_made']
     description = body['description']
@@ -107,6 +125,9 @@ def create_recipe_for_cuisine(cuisine_id):
 # Add user to recipe
 @app.route("/api/recipes/<int:recipe_id>/add_user/<int:user_id>/", methods=["POST"])
 def add_user_to_recipe(recipe_id, user_id):
+    """
+    Endpoint for adding specific user to a specific recipe id
+    """
     recipe = Recipe.query.filter_by(id=recipe_id).first()
     if not recipe:
         return failure_response("Recipe not found", 404)
