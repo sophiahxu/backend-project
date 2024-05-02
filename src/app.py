@@ -1,6 +1,7 @@
 from db import Cuisine, User, Recipe, db
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import json
+
 
 app = Flask(__name__)
 db_filename = "cms.db"
@@ -40,13 +41,14 @@ def create_cuisine():
     return json.dumps(new_cuisine.serialize()), 201
 
 #get a specific cuisine
-@app.route("/api/cuisines/<int:cuisine_id>/", methods=["GET"])
-def get_cuisine(cuisine_id):
-    cuisine = Cuisine.query.filter_by(id=cuisine_id).first()
-    if cuisine is None:
+@app.route("/api/cuisines/<string:cuisine_name>/", methods=["GET"])
+def get_cuisine(cuisine_name):
+    cuisines = Cuisine.query.filter_by(name=cuisine_name).all()
+
+    if cuisines is None:
         return failure_response("cuisine not found!")
-    
-    return json.dumps(cuisine.serialize()), 200
+    serialized_cuisines = [cuisine.serialize() for cuisine in cuisines]
+    return jsonify(serialized_cuisines)
 
 #delete a cuisine
 @app.route("/api/cuisines/<int:cuisine_id>/", methods=["DELETE"])
@@ -63,10 +65,10 @@ def delete_cuisine(cuisine_id):
 @app.route('/api/users/', methods=['POST'])
 def create_user():
     body = json.loads(request.data)
-    if not body or 'name' not in body or 'netid' not in body:
-        return failure_response("Missing required fields: name and netid", 400)
+    if not body or 'name' not in body:
+        return failure_response("Missing required fields: name", 400)
 
-    new_user = User(name=body['name'], netid=body['netid'])
+    new_user = User(name=body['name'])
     db.session.add(new_user)
     db.session.commit()
 
