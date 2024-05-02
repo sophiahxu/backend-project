@@ -42,7 +42,7 @@ class Recipe(db.Model):
   title = db.Column(db.String, nullable=False)
   date_made = db.Column(db.Integer, nullable=False)
   cuisine_id = db.Column(db.Integer, db.ForeignKey("cuisine.id"))
-  shared_users = db.relationship("User", secondary='recipe_users_association', back_populates="cuisines_taught")
+  shared_users = db.relationship("User", secondary='recipe_users_association', back_populates="cuisines")
 
   def __init__(self, **kwargs):
         self.title= kwargs.get("title")
