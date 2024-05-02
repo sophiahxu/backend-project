@@ -27,7 +27,7 @@ class Cuisine(db.Model):
         "recipes": [recipe.simple_serialize() for recipe in self.recipes]
     }
   
-  # Serialize a cuisine without recipes, or shared_users fields
+  # Serialize a cuisine without recipes, or user_cuisines fields
   def serialize_cuisine(self):
       return {
           "id": self.id,
@@ -42,7 +42,7 @@ class Recipe(db.Model):
   title = db.Column(db.String, nullable=False)
   date_made = db.Column(db.Integer, nullable=False)
   cuisine_id = db.Column(db.Integer, db.ForeignKey("cuisine.id"))
-  shared_users = db.relationship("User", secondary='recipe_users_association', back_populates="cuisines")
+  recipe_user_creator = db.relationship("User", secondary='recipe_users_association', back_populates="cuisines")
 
   def __init__(self, **kwargs):
         self.title= kwargs.get("title")
@@ -56,7 +56,7 @@ class Recipe(db.Model):
     'title': self.title,
     'date_made': self.date_made,
     'cuisine': cuisine.serialize_cuisine(),
-    "shared_users": [instructor.simple_serialize() for instructor in self.shared_users]
+    "recipe_user_creator": [x.simple_serialize() for x in self.recipe_user_creator ]
     }
   
   def simple_serialize(self):
@@ -71,15 +71,13 @@ class User(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String, nullable=False)
-    netid = db.Column(db.String, nullable=False)
-    cuisines_taught = db.relationship("Recipe", secondary=association_table_users, back_populates="shared_users")
+    created_recipes = db.relationship("Recipe", secondary=association_table_users, back_populates="recipe_user_creator")
 
     def __init__(self,**kwargs):
         self.name= kwargs.get("name")
-        self.netid= kwargs.get("netid")
 
     def serialize(self):
-        taught_recipe_ids = [recipe.id for recipe in self.cuisines_taught]
+        taught_recipe_ids = [recipe.id for recipe in self.created_recipes]
         
         recipes = []
         for recipe_id in taught_recipe_ids:
@@ -90,7 +88,6 @@ class User(db.Model):
         return {
             "id": self.id,
             "name": self.name,
-            "netid": self.netid,
             "cuisines": recipes
         }
     
@@ -98,5 +95,4 @@ class User(db.Model):
        return {
             "id": self.id,
             "name": self.name,
-            "netid": self.netid
         }
