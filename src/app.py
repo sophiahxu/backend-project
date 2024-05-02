@@ -4,7 +4,7 @@ import json
 
 
 app = Flask(__name__)
-db_filename = "cms.db"
+db_filename = "recipe_center.db"
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///%s" % db_filename
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -32,20 +32,20 @@ def get_cuisines():
 @app.route("/api/cuisines/", methods=["POST"])
 def create_cuisine():
     body = json.loads(request.data)
-    if not body or "description" not in body or "name" not in body:
-        return failure_response("Description or name missing!", 400)
+    if not body or "name" not in body:
+        return failure_response("Cuisine name missing!", 400)
     
-    new_cuisine = Cuisine(description=body['description'], name=body['name'])
+    new_cuisine = Cuisine(name=body['name'])
     db.session.add(new_cuisine)
     db.session.commit()
     return json.dumps(new_cuisine.serialize()), 201
 
 #get a specific cuisine
-@app.route("/api/cuisines/<string:cuisine_name>/", methods=["GET"])
-def get_cuisine(cuisine_name):
-    cuisines = Cuisine.query.filter_by(name=cuisine_name).all()
+@app.route("/api/cuisines/<int:cuisine_id>/", methods=["GET"])
+def get_cuisine(cuisine_id):
+    cuisines = Cuisine.query.filter_by(name=cuisine_id).all()
 
-    if cuisines is None:
+    if cuisines is None or cuisines == []:
         return failure_response("cuisine not found!")
     serialized_cuisines = [cuisine.serialize() for cuisine in cuisines]
     return jsonify(serialized_cuisines)
@@ -55,8 +55,8 @@ def get_cuisine(cuisine_name):
 def delete_cuisine(cuisine_id):
     cuisine = Cuisine.query.filter_by(id=cuisine_id).first()
     if cuisine is None:
-        return failure_response("Task not found!")
-    
+        return failure_response("cuisine not found!")
+
     db.session.delete(cuisine)
     db.session.commit()
     return json.dumps(cuisine.serialize()), 200
