@@ -43,12 +43,12 @@ def create_cuisine():
 #get a specific cuisine
 @app.route("/api/cuisines/<int:cuisine_id>/", methods=["GET"])
 def get_cuisine(cuisine_id):
-    cuisines = Cuisine.query.filter_by(name=cuisine_id).all()
+    cuisine = Cuisine.query.filter_by(id=cuisine_id).first()
 
-    if cuisines is None or cuisines == []:
+    if cuisine is None:
         return failure_response("cuisine not found!")
-    serialized_cuisines = [cuisine.serialize() for cuisine in cuisines]
-    return jsonify(serialized_cuisines)
+    
+    return success_response(cuisine.serialize())
 
 #delete a cuisine
 @app.route("/api/cuisines/<int:cuisine_id>/", methods=["DELETE"])
@@ -87,20 +87,41 @@ def get_user(user_id):
 @app.route("/api/cuisines/<int:cuisine_id>/recipe/", methods=["POST"])
 def create_recipe_for_cuisine(cuisine_id):
     body = json.loads(request.data)
-    if not body or 'title' not in body or 'date_made' not in body:
-        return failure_response("Missing required fields: title and date_made", 400)
+    date_made = body['date_made']
+    description = body['description']
+
+    if not body or 'title' not in body or 'date_made' not in body or 'description' not in body:
+        return failure_response("Missing required fields: title, description, date_made", 400)
 
     cuisine = Cuisine.query.filter_by(id=cuisine_id).first()
     if not cuisine or cuisine is None:
         return failure_response("cuisine not found", 404)
 
-    date_made = body['date_made']
-
-    new_recipe = Recipe(title=body['title'], date_made=date_made, cuisine_id=cuisine_id)
+   
+    new_recipe = Recipe(title=body['title'], date_made=date_made, cuisine_id=cuisine_id, description=description)
     db.session.add(new_recipe)
     db.session.commit()
 
     return json.dumps(new_recipe.serialize()), 201
 
+# Add user to recipe
+@app.route("/api/recipes/<int:recipe_id>/add_user/<int:user_id>/", methods=["POST"])
+def add_user_to_recipe(recipe_id, user_id):
+    recipe = Recipe.query.filter_by(id=recipe_id).first()
+    if not recipe:
+        return failure_response("Recipe not found", 404)
+
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return failure_response("User not found", 404)
+
+    recipe.recipe_user_creator.append(user)
+    db.session.commit()
+
+    return success_response(recipe.serialize())
+
+    
+    
+    
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)

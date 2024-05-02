@@ -11,18 +11,15 @@ association_table_users = db.Table('recipe_users_association', db.Model.metadata
 class Cuisine(db.Model):    
   __tablename__ = "cuisine"    
   id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-#   description = db.Column(db.String, nullable=False)
   name = db.Column(db.String, nullable=False)
   recipes = db.relationship("Recipe", cascade="delete")
 
   def __init__(self, **kwargs):
-    # self.description = kwargs.get("description", "")
     self.name = kwargs.get("name", "")
 
   def serialize(self):    
     return {        
         "id": self.id,
-        # "description": self.description,
         "name": self.name,
         "recipes": [recipe.simple_serialize() for recipe in self.recipes]
     }
@@ -31,7 +28,6 @@ class Cuisine(db.Model):
   def serialize_cuisine(self):
       return {
           "id": self.id,
-        #   "description": self.description,
           "name": self.name
       }
 
@@ -49,6 +45,7 @@ class Recipe(db.Model):
         self.title= kwargs.get("title")
         self.date_made=kwargs.get("date_made")
         self.cuisine_id= kwargs.get("cuisine_id")
+        self.description = kwargs.get("description")
 
   def serialize(self):
     cuisine = Cuisine.query.filter_by(id=self.cuisine_id).first()
